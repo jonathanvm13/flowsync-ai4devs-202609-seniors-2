@@ -47,7 +47,7 @@ La API SHALL rechazar el registro con un 422 cuando algún campo no cumpla sus r
 #### Scenario: Contraseña fuera de longitud
 
 - **WHEN** `password` tiene menos de 8 o más de 32 caracteres
-- **THEN** la respuesta es 422 con un error de regla `minLength` (con `meta.min` = 8) o `maxLength` (con `meta.max` = 32) en el campo `password`
+- **THEN** la respuesta es 422 con un error de regla `minLength` (con `meta.min` = 8) o `maxLength` (con `meta.max` = 32) en el campo `password`, y la misma regla se aplica de forma independiente a `passwordConfirmation`
 
 #### Scenario: Confirmación que no coincide
 
@@ -122,7 +122,7 @@ La API SHALL devolver en `GET /api/v1/account/profile` los datos públicos de la
 
 #### Scenario: Iniciales a partir del nombre
 
-- **WHEN** la cuenta tiene un `fullName` con al menos dos palabras separadas por espacio
+- **WHEN** la cuenta tiene un `fullName` cuyas dos primeras palabras están separadas por un único espacio
 - **THEN** `initials` es la primera letra de la primera palabra más la primera letra de la segunda, en mayúsculas
 
 #### Scenario: Iniciales sin nombre
@@ -238,7 +238,12 @@ La aplicación web SHALL mostrar los errores de los formularios de acceso en cas
 #### Scenario: Nuevo intento
 
 - **WHEN** la persona vuelve a enviar el formulario tras un error
-- **THEN** los errores del intento anterior desaparecen al iniciarse el nuevo envío
+- **THEN** los errores de campo y el aviso general del intento anterior desaparecen al iniciarse el nuevo envío
+
+#### Scenario: Campos vacíos en el login
+
+- **WHEN** la persona pulsa «Entrar» con «Email» o «Contraseña» vacíos
+- **THEN** el formulario se envía igualmente y bajo cada campo vacío aparece «Falta rellenar el email.» o «Falta rellenar la contraseña.»
 
 ### Requirement: Pantalla de perfil
 
@@ -287,10 +292,15 @@ La aplicación web SHALL conservar la sesión al recargar la página o volver a 
 - **WHEN** se abre la aplicación con una sesión guardada y el servidor no responde
 - **THEN** la persona acaba en `/login` con el aviso «No se pudo conectar con el servidor. Comprueba que el backend está arrancado.», y la sesión guardada se conserva, de modo que al recargar con el servidor ya disponible vuelve a entrar sin credenciales
 
-#### Scenario: El aviso de sesión perdida cede ante el del intento actual
+#### Scenario: Error del servidor al restaurar la sesión
 
-- **WHEN** en `/login` se muestra el aviso de sesión perdida y la persona intenta entrar con credenciales incorrectas
-- **THEN** el aviso pasa a ser el del intento actual («El email o la contraseña no son correctos.»)
+- **WHEN** se abre la aplicación con una sesión guardada y el servidor responde con un error que no es de autenticación
+- **THEN** la persona acaba en `/login` con el aviso «Algo ha ido mal en el servidor. Inténtalo de nuevo en un momento.» y la sesión guardada se conserva; solo un rechazo de autenticación la descarta
+
+#### Scenario: El aviso de sesión perdida persiste hasta entrar
+
+- **WHEN** en `/login` se muestra el aviso de sesión perdida y la persona intenta entrar
+- **THEN** el aviso sigue visible mientras se envía el formulario; si el intento falla, lo sustituye el error de ese intento («El email o la contraseña no son correctos.»), y solo desaparece del todo al iniciar sesión con éxito
 
 ### Requirement: Protección de rutas
 
