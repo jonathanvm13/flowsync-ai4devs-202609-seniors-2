@@ -92,7 +92,7 @@ Se añade un fichero nuevo de validadores para tareas. En él se define un build
 - **En `lib/types.ts`** se añaden:
   - `TaskStatus = 'pending' | 'in_progress' | 'done'`;
   - `Task = { id; title; status; assignee: { id; fullName: string | null } }`.
-- **En `lib/api.ts`** se añaden `listTasks(token)`, `createTask(token, { title })` y `updateTaskStatus(token, id, status)`. No se expone una función para reasignar, porque la interfaz no lo hace.
+- **En `lib/api.ts`** se amplía el tipo `method` de `RequestOptions`, de `'GET' | 'POST'` a `'GET' | 'POST' | 'PATCH'`, y se añaden `listTasks(token)`, `createTask(token, { title })` y `updateTaskStatus(token, id, status)`. No se expone una función para reasignar, porque la interfaz no lo hace.
 - **También en `lib/api.ts`** se añade `title: 'el título'` a `FIELD_LABELS`, junto con dos casos específicos en `translate`:
   - `field === 'title'` con `required` o `minLength`: «Escribe un título para la tarea.»;
   - `field === 'title'` con `maxLength`: «El título no puede superar los 255 caracteres.».
@@ -109,9 +109,10 @@ Se añade un fichero nuevo de validadores para tareas. En él se define un build
 - Lleva un único `Input`, etiquetado «Título», y un `Button` «Crear tarea».
 - **Envío.** Reutiliza `useAuthForm(['title'])`: le sirve tal cual el estado de envío, el reparto de errores por campo y el aviso general.
   - Antes de enviar, si el título recortado está vacío, se llama a `failWith('title', 'Escribe un título para la tarea.')` y no se envía nada, igual que el registro con las contraseñas.
-  - `useAuthForm` resetea su estado en cada envío pero no conoce el valor del campo. Por eso solo se vacía el `Input` si la promesa resuelve, y el texto se conserva cuando hay error.
+  - `useAuthForm` resetea su estado en cada envío pero no conoce el valor del campo, y su `submit` nunca rechaza, porque captura el error. Por eso el vaciado del `Input` va **dentro** de la closure `action`, justo después de `await createTask(...)`, y no tras `await submit(...)`: así el texto se conserva cuando hay error.
+  - Los campos se pasan como una constante de módulo `const FIELDS = ['title'] as const`, igual que en `login-page.tsx`, y no como un literal inline que se recrearía en cada render.
 - **Al crear.** La tarea devuelta se añade al estado local, sin volver a pedir la lista: así cumple «sin recargar» con una sola petición.
-  - Se añade al final del array local. No es una regla de orden, solo dónde cae la nueva.
+  - Se añade al final del array local porque es lo más simple, no un criterio de orden. Tras recargar puede salir en otra posición, y nada en la spec promete lo contrario (PA-3).
 
 **Lista**
 
@@ -119,7 +120,8 @@ Se añade un fichero nuevo de validadores para tareas. En él se define un build
   - Mientras carga, se muestra el mismo icono de carga que `FullScreenLoader`, pero dentro de la tarjeta.
   - Si falla la carga, aparece un `Alert` destructivo con el mensaje de `ApiError`.
   - Si no hay tareas, se muestra un bloque explicativo, por ejemplo: «Todavía no hay tareas. Esta es la lista compartida del equipo: aquí verás todo lo que hay en marcha, quién lo lleva y en qué estado está. Crea la primera escribiendo su título.».
-- **Filas.** Cada fila es un `<li>` con el título, el responsable (`assignee.fullName ?? 'Sin nombre'`) y el control de estado.
+- **Filas.** Cada fila es un `<li>` con el título, el responsable (`assignee.fullName?.trim() || 'Sin nombre'`) y el control de estado.
+  - Se usa `trim() ||` en vez de `??` porque la API de registro no recorta `fullName`: una cuenta creada fuera de la web con un nombre de solo espacios tiene que pintarse también como «Sin nombre».
 
 **Control de estado**
 

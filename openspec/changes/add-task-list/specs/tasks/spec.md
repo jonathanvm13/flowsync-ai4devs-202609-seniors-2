@@ -10,6 +10,11 @@ Dar al equipo una única lista compartida de tareas en la que cualquiera ve el t
 
 Toda tarea SHALL estar en exactamente uno de tres estados, que la API representa como `pending`, `in_progress` y `done` y la aplicación web muestra como «Pendiente», «En curso» y «Hecho». El conjunto SHALL ser cerrado: no existe ninguna forma de añadir, renombrar ni eliminar estados, y la API SHALL rechazar con 422 cualquier otro valor.
 
+#### Scenario: Los estados no se gestionan
+
+- **WHEN** alguien busca, en la API o en la aplicación web, cómo añadir, renombrar o eliminar un estado
+- **THEN** no existe ninguna operación ni pantalla para ello, y los únicos estados siguen siendo `pending`, `in_progress` y `done`
+
 #### Scenario: Estado fuera del conjunto
 
 - **WHEN** se intenta poner a una tarea un estado distinto de `pending`, `in_progress` o `done` (por ejemplo `pendiente`, `blocked` o `DONE`)
@@ -42,6 +47,16 @@ La API SHALL devolver en `GET /api/v1/tasks` todas las tareas existentes dentro 
 
 - **WHEN** otra persona crea una tarea y luego yo pido el listado
 - **THEN** esa tarea aparece en mi respuesta, con ella misma como responsable
+
+#### Scenario: No hay tareas privadas
+
+- **WHEN** se crea una tarea por cualquier vía disponible
+- **THEN** no existe ninguna opción que la oculte a otras personas, y aparece en el listado de cualquiera que tenga sesión
+
+#### Scenario: Sin contenido reservado
+
+- **WHEN** cualquier persona con sesión pide el listado, sin importar qué cuenta sea
+- **THEN** recibe todas las tareas, sin que ninguna quede reservada a un rol o a una persona concreta
 
 #### Scenario: Forma de cada tarea
 
@@ -175,8 +190,13 @@ La aplicación web SHALL mostrar en `/tasks`, solo con sesión iniciada, una ún
 
 #### Scenario: Responsable sin nombre en pantalla
 
-- **WHEN** el responsable de una tarea no tiene nombre puesto
+- **WHEN** el responsable de una tarea no tiene nombre puesto, o su nombre consiste solo en espacios
 - **THEN** la fila muestra «Sin nombre» en su lugar
+
+#### Scenario: No hay vista «mis tareas»
+
+- **WHEN** una persona con sesión recorre la aplicación buscando otras vistas de tareas
+- **THEN** solo encuentra `/tasks`, y no hay ninguna vista ni filtro que muestre únicamente sus tareas
 
 #### Scenario: Sin fechas en la lista
 

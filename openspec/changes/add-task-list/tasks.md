@@ -32,7 +32,7 @@
 
 ## 4. Cliente de API y tipos (frontend)
 
-- [ ] 4.1 Añadir en `src/lib/types.ts` los tipos `TaskStatus` y `Task` (`assignee: { id, fullName: string | null }`), y en `src/lib/api.ts` las funciones `listTasks`, `createTask` y `updateTaskStatus`, que desenvuelven `data`. Verificar con `npm run build` en `frontend/`.
+- [ ] 4.1 Añadir en `src/lib/types.ts` los tipos `TaskStatus` y `Task` (`assignee: { id, fullName: string | null }`). En `src/lib/api.ts`, ampliar `method` de `RequestOptions` con `'PATCH'` y añadir las funciones `listTasks`, `createTask` y `updateTaskStatus`, que desenvuelven `data`. Verificar con `npm run build` en `frontend/`.
 - [ ] 4.2 Añadir en `src/lib/api.ts` la etiqueta `title` y las traducciones específicas del título: «Escribe un título para la tarea.» para `required` y `minLength`, y «El título no puede superar los 255 caracteres.» para `maxLength`. Comprobarlo forzando cada caso desde la pantalla en la tarea 5.4.
 
 ## 5. Pantalla de la lista (frontend)
@@ -41,13 +41,13 @@
   - cabecera «Tareas del equipo» con el enlace «Mi perfil»;
   - carga inicial con indicador de carga, y `Alert` con el mensaje en castellano si falla;
   - estado vacío explicativo que invita a crear la primera tarea;
-  - filas con título, `assignee.fullName ?? 'Sin nombre'` y estado mostrado como Pendiente, En curso o Hecho.
+  - filas con título, `assignee.fullName?.trim() || 'Sin nombre'` y estado mostrado como Pendiente, En curso o Hecho.
 
   Verificar en el navegador con y sin tareas, y con el backend parado.
-- [ ] 5.2 Añadir el formulario de creación con un único campo «Título» y el botón «Crear tarea», usando `useAuthForm(['title'])`:
+- [ ] 5.2 Añadir el formulario de creación con un único campo «Título» y el botón «Crear tarea», usando `useAuthForm(FIELDS)`, con `FIELDS = ['title'] as const` como constante de módulo:
   - comprobación local de título en blanco con `failWith`;
   - botón deshabilitado durante el envío;
-  - la tarea devuelta se añade a la lista local y el campo se vacía solo si la creación sale bien.
+  - la tarea devuelta se añade a la lista local y el campo se vacía dentro de la closure `action`, tras `await createTask`, nunca después de `submit`, que no rechaza.
 
   Verificar en el navegador que la tarea aparece sin recargar, en Pendiente y con tu nombre (o «Sin nombre»).
 - [ ] 5.3 Añadir en cada fila el grupo de tres botones de estado:
